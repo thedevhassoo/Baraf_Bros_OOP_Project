@@ -1,0 +1,40 @@
+# Visual Studio files
+.vs/
+Debug/
+Release/
+x64/
+x86/
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.sln
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build output
+*.exe
+*.obj
+*.o
+*.pdb
+*.ilk
+*.lib
+*.dll
+*.exp
+
+# SFML DLLs in output folder (keep source)
+bin/*.dll
+
+# User data files (generated at runtime)
+users.txt
+users_temp.txt
+next_id.txt
+leaderboard.txt
+
+# VS Code
+.vscode/
+
+# Any other generated files
+*.log
+*.tmp
