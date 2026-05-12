@@ -7,7 +7,7 @@
 Gamakichi::Gamakichi() {
     setEnemyName("Gamakichi");
     setMaxHits(999);
-    setScoreValue(10000);
+    setScoreValue(100000);
     setGemDrop(0);
 
     maxBossHealth = 12;
@@ -115,7 +115,15 @@ void Gamakichi::removeRocket(int index) {
 
 void Gamakichi::updateAI(float dt, Platform** platforms, int platformCount,
     Player* player1, Player* player2) {
-    if (isEncased) return;
+    if (isEncased) {
+        enemyCurrentAnim = 2;
+        if (enemyCurrentAnim != enemyPrevAnim) {
+            enemySpritesheet->playAnim(enemyCurrentAnim);
+            enemyPrevAnim = enemyCurrentAnim;
+        }
+        enemySpritesheet->update(dt);
+        return;
+    }
     checkPlatformCollisions(platforms, platformCount);
     moveTimer += dt;
     if (moveTimer >= moveInterval) {
@@ -124,6 +132,8 @@ void Gamakichi::updateAI(float dt, Platform** platforms, int platformCount,
         moveInterval = 3.0f + (rand() % 200) / 100.0f;
     }
     velocityX = moveDirection * bossSpeed;
+    velocityY = gravity;
+    posY += velocityY * dt;
     facingRight = (moveDirection > 0);
 
     if (posX < 80) posX = 80;

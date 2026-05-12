@@ -130,6 +130,7 @@ void Player::applyDistanceIncrease() {
 void Player::applyBalloonMode(float duration) {
     balloonMode = true;
     balloonTimer = duration;
+    hitTimer = duration;
     gravity = 0;
 }
 
@@ -159,7 +160,7 @@ void Player::clearPowerUps() {
 
 void Player::checkPlatformCollisions(Platform** platforms, int count) {
     if (!hitbox || !platforms) return;
-
+    if (balloonMode) return;
     isGrounded = false;
     float hw = hitbox->getWidth();
     float hh = hitbox->getHeight();
@@ -245,7 +246,8 @@ void Player::update(float dt) {
         if (spritesheet) { spritesheet->update(dt); updateAnimation(dt); }
         applyPhysics(dt);
         if (dyingTimer <= 0) {
-            isDying = false;
+            //isDying = false;
+            
         }
         return;
     }

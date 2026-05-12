@@ -28,7 +28,7 @@ bool ShopSystem::buySnowballPower() {
     if (!auth) return false;
     if (auth->getGems() < getSnowballPowerCost()) return false;
     auth->removeGems(getSnowballPowerCost());
-    auth->addBalloons(1);
+    auth->addDistancePUP(1);
     return true;
 }
 
@@ -44,6 +44,7 @@ bool ShopSystem::buyBalloonMode() {
     if (!auth) return false;
     if (auth->getGems() < getBalloonModeCost()) return false;
     auth->removeGems(getBalloonModeCost());
+    auth->addBalloons(1);
     return true;
 }
 

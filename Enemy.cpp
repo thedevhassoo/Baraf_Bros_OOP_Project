@@ -32,7 +32,7 @@ void Enemy::configureEnemySprite(float frameW, float frameH, float targetW, floa
     enemySpritesheet->setSpriteOrigin(frameW / 2.0f, frameH);
     setHitboxSize(targetW, targetH);
     //setHitboxOffset(-targetW, -targetH);
-    //setHitboxOffset(-5, -15);
+    //setHitboxOffset(-10, 0);
 }
 void Enemy::hitBySnowball(int power) {
     if (isEncased && !isRolling) return;  // Already encased, can't double-encase

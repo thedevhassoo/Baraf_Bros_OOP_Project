@@ -293,7 +293,7 @@ void GameState::spawnEnemies() {
                 s->setAnimLoop(2, false);
                 s->setSpriteOrigin(281 / 2.0f, 273);
                 enemy->setEnemySpritesheet(s);
-                enemy->configureEnemySprite(281, 273, 181, 203);
+                enemy->configureEnemySprite(281, 273, 100, 203);
             }
             else if (strcmp(type, "Gamakichi") == 0)
             {
@@ -311,9 +311,9 @@ void GameState::spawnEnemies() {
                 s->setAnimLoop(0, false);
                 s->setAnimLoop(1, true);
                 s->setAnimLoop(2, false);
-                s->setSpriteOrigin(196 / 2.0f, 177);  // Bottom-center
                 enemy->setEnemySpritesheet(s);
-                enemy->configureEnemySprite(196, 177, 197, 191);
+                enemy->configureEnemySprite(196, 177, 137, 121);
+                s->setSpriteOrigin(196 / 2.0f, 177);  // Bottom-center
             }
 
             addEnemy(enemy);
@@ -335,7 +335,7 @@ void GameState::checkPlayerBossChildCollisions() {
             if (!childHit) continue;
 
             for (int p = 0; p < playerCount; p++) {
-                if (!isPlayerAlive(players[p]) || players[p]->isDying) continue;
+                if (!isPlayerAlive(players[p]) || players[p]->isDying || players[p]->hitTimer > 0) continue;
 
                 HitBox* playerHit = players[p]->getHitbox();
                 if (!playerHit) continue;
@@ -468,10 +468,10 @@ void GameState::handleGameInput(const sf::Event& event) {
             storedRangeBoosts--;
             if (auth) auth->updateDistancePUP(storedRangeBoosts);
         }
-        if (event.key.code == sf::Keyboard::V && storedBalloons > 0) {
-            player1->applyBalloonMode(30.0f);
+        if (event.key.code == sf::Keyboard::V && storedSnowballPowers > 0) {
+            player1->applyBalloonMode(10.0f);
             if (player2) player2->applyBalloonMode(30.0f);
-            storedBalloons--;
+            storedSnowballPowers--;
         }
         if (event.key.code == sf::Keyboard::C && storedExtraLives > 0) {
             player1->addLife();
@@ -573,7 +573,7 @@ void GameState::checkSnowballEnemyCollisions() {
 void GameState::checkPlayerEnemyCollisions() {
     Player* players[2] = { player1, player2 };
     for (int p = 0; p < playerCount; p++) {
-        if (!isPlayerAlive(players[p]) || players[p]->isDying) continue;
+        if (!isPlayerAlive(players[p]) || players[p]->isDying || players[p]->hitTimer > 0) continue;
         HitBox* pHit = players[p]->getHitbox();
 
         for (int e = 0; e < enemyCount; e++) {
@@ -625,6 +625,9 @@ void GameState::checkRollingEnemyCollisions() {
                 score += (int)(enemies[e]->getScoreValue() * 1.1f);
                 if (enemies[e]->getIsEncased()) {
                     gems += enemies[e]->getGemDrop();
+                    // Kick the newly encased enemy in the same direction
+                    float dir = enemies[r]->getVelocityX() > 0 ? 1.0f : -1.0f;
+                    enemies[e]->startRoll(dir);
                 }
             }
         }
@@ -648,7 +651,7 @@ void GameState::checkPlayerKnifeCollisions() {
             if (!knives[k] || !knives[k]->isActive()) continue;
 
             for (int p = 0; p < playerCount; p++) {
-                if (!isPlayerAlive(players[p]) || players[p]->isDying) continue;
+                if (!isPlayerAlive(players[p]) || players[p]->isDying || players[p]->hitTimer > 0) continue;
                 HitBox* pHit = players[p]->getHitbox();
                 HitBox* kHit = knives[k]->getHitbox();
                 if (pHit && kHit && pHit->intersects(*kHit)) {
@@ -678,7 +681,7 @@ void GameState::checkPlayerRocketCollisions() {
             if (!rockets[r] || !rockets[r]->isActive()) continue;
 
             for (int p = 0; p < playerCount; p++) {
-                if (!isPlayerAlive(players[p]) || players[p]->isDying) continue;
+                if (!isPlayerAlive(players[p]) || players[p]->isDying || players[p]->hitTimer > 0) continue;
                 HitBox* pHit = players[p]->getHitbox();
                 HitBox* rHit = rockets[r]->getHitbox();
                 if (pHit && rHit && pHit->intersects(*rHit)) {
@@ -1224,7 +1227,14 @@ void GameState::handleEvent(const sf::Event& event, sf::RenderWindow& window) {
 //    checkLevelComplete();
 //}
 void GameState::update(float dt) {
-    if (isPaused || isGameOver) return;
+    if (isPaused) return;
+    if (isGameOver) {
+        player1->update(dt);
+        if (player2) {
+            player2->update(dt);
+        }
+        return;
+    }
 
     bool p1Out = !isPlayerAlive(player1);
     bool p2Out = !player2 || !isPlayerAlive(player2);
@@ -1241,18 +1251,21 @@ void GameState::update(float dt) {
         platforms[i] = currentLevel->getPlatform(i);
     }
 
-    // Update only players who still have lives. A player with 0 lives stays out while the other continues.
-    if (isPlayerAlive(player1)) {
-        player1->update(dt);
-        player1->checkPlatformCollisions(platforms, platCount);
-    }
-    if (isPlayerAlive(player2)) {
+    player1->update(dt);
+    player1->checkPlatformCollisions(platforms, platCount);
+    if (player2) {
         player2->update(dt);
         player2->checkPlatformCollisions(platforms, platCount);
     }
 
     if (isLevelComplete) {
         levelCompleteTimer -= dt;
+        if (activeMogera) {
+            activeMogera->updateAI(dt, platforms, platCount, nullptr, nullptr);
+        }
+        if (activeGamakichi) {
+            activeGamakichi->updateAI(dt, platforms, platCount, nullptr, nullptr);
+        }
         updateBonusRain(dt);
         if (levelCompleteTimer <= 0 && bonusRainTimer <= 0) {
             loadNextLevel();
@@ -1352,8 +1365,8 @@ void GameState::draw(sf::RenderWindow& window) {
     }
 
     // Draw players
-    if (isPlayerAlive(player1)) player1->draw(window);
-    if (isPlayerAlive(player2)) player2->draw(window);
+    if (player1) player1->draw(window);   // Always draw (death anim handles itself)
+    if (player2) player2->draw(window);   // Always draw
 
     // Draw power-ups
     powerUpSystem.draw(window);

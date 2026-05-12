@@ -7,7 +7,7 @@
 Mogera::Mogera() {
     setEnemyName("Mogera");
     setMaxHits(999);
-    setScoreValue(5000);
+    setScoreValue(100000);
     setGemDrop(0);
 
     maxBossHealth = 6;
@@ -97,7 +97,7 @@ void Mogera::spawnChild(int levelColorVariant) {
     }
 
     Botom* child = new Botom();
-    child->setPosition(posX + 40, posY + 124);
+    child->setPosition(posX-5, posY + 124);
     child->setColorVariant(levelColorVariant);
     child->setHitboxSize(34, 30);
     child->setHitboxOffset(-17, -30);
@@ -139,7 +139,15 @@ void Mogera::removeChild(int index) {
 
 void Mogera::updateAI(float dt, Platform** platforms, int platformCount,
     Player* player1, Player* player2) {
-    if (isEncased) return;
+    if (isEncased) {
+        enemyCurrentAnim = 2;
+        if (enemyCurrentAnim != enemyPrevAnim) {
+            enemySpritesheet->playAnim(enemyCurrentAnim);
+            enemyPrevAnim = enemyCurrentAnim;
+        }
+        enemySpritesheet->update(dt);
+        return;
+    }
     // Face toward nearest player
     if (spawnY == 0) {
         spawnY = posY;
@@ -171,7 +179,7 @@ void Mogera::updateAI(float dt, Platform** platforms, int platformCount,
         spawnAnimTimer -= dt;
         if (spawnAnimTimer <= 0) {
             spawnAnimPlaying = false;
-            spawnChild(0);
+            spawnChild(currentPhase-1);
         }
     }
 

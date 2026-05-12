@@ -67,6 +67,11 @@ void Tornado::doTeleport() {
     float targetY = 80.0f + (rand() % 300);     // 80-380
 
     // Set flight direction toward target
+        // Clamp to screen bounds
+    if (targetX < 50) targetX = 50;
+    if (targetX > 1230) targetX = 1230;
+    if (targetY < 50) targetY = 50;
+    if (targetY > 600) targetY = 600;
     float dx = targetX - posX;
     float dy = targetY - posY;
 
